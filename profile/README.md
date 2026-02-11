@@ -1,9 +1,4 @@
 <div align="center">
-
-  <img src="https://i.ibb.co/fGnfbGV9/logo-2-3.png" alt="Kanso Logo" height="100" />
-  
-  <br />
-
   <h1>Kanso Systems</h1>
   
   <p>
