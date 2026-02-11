@@ -48,7 +48,7 @@ Our architecture is built on three pillars, ensuring robust security and seamles
 | Component | Tech Stack | Role |
 | :--- | :--- | :--- |
 | **📱 KansoOS (Core)** | `AOSP` `Kotlin` `Room` | A custom Android ROM with a strict Kiosk Mode. Zero distractions, cognitive-friendly UI. |
-| **☁️ Kanso Cloud** | `Rust` `PostgreSQL` `Docker` | The backend "Source of Truth". Handles fleet management and secure telemetry. |
+| **☁️ Kanso Cloud** | `Node.js` `NestJS` `PostgreSQL` `Docker` | The backend "Source of Truth". Handles fleet management and secure telemetry. |
 | **💻 Guardian Portal** | `React` `Next.js` `TypeScript` | A simplified web dashboard for caregivers to manage apps and contacts remotely. |
 
 <br />
