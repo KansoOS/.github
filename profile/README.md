@@ -83,10 +83,10 @@ We leverage industry-standard technologies to ensure **reliability**, **security
 
 Explore the components of the Kanso ecosystem:
 
-* **[`kanso-android-core`](#)** - The AOSP build system and device tree configurations.
-* **[`kanso-launcher`](#)** - The accessible home screen interface (Kotlin).
-* **[`kanso-mdm-backend`](#)** - The Rust-based API server.
-* **[`kanso-web-dashboard`](#)** - The frontend portal for caregivers.
+* **[`kanso-android-core`](https://github.com/KansoOS/kanso-android-core)** - The AOSP build system and device tree configurations.
+* **[`kanso-launcher`](https://github.com/KansoOS/kanso-launcher)** - The accessible home screen interface (Kotlin).
+* **[`kanso-mdm-backend`](https://github.com/KansoOS/kanso-mdm-backend)** - The NestJS based API server.
+* **[`kanso-web-dashboard`](https://github.com/KansoOS/kanso-web-dashboard)** - The frontend portal for caregivers.
 
 <br />
 
