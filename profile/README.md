@@ -1,111 +1,48 @@
 <div align="center">
-  <h1>Kanso Systems</h1>
-  
+  <img src="https://i.ibb.co/zTG0SKnH/logo-2-3.png" alt="Kanso Logo" width="100" height="100">
+  <h1>Kanso Project</h1>
   <p>
-    <b>The Cognitive Operating System.</b><br>
-    <i>Bridging the gap between Digital Autonomy and Peace of Mind.</i>
+    <b>Accessible. Secure. Empowering.</b><br>
+    A comprehensive mobile ecosystem designed for neurodivergent independence.
   </p>
-
-  <br />
-
-  <a href="https://kanso-os.com">
-    <img src="https://img.shields.io/badge/WEBSITE-KANSO--OS.COM-0F4C81?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Website" />
-  </a>
-  <a href="#">
-    <img src="https://img.shields.io/badge/PLATFORM-ANDROID%20%2F%20AOSP-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Platform" />
-  </a>
-  <a href="#">
-    <img src="https://img.shields.io/badge/STATUS-ACTIVE%20DEV-4CA1AF?style=for-the-badge" alt="Status" />
-  </a>
-
 </div>
-
-<br />
-<br />
-
-<div align="center">
-
-### Our Mission
-
-**KansoOS** (from Japanese *Kanso*, Simplicity) addresses a critical gap in the mobile market:<br>
-Standard smartphones are often sources of anxiety and sensory overload for individuals with Autism Spectrum Disorder (ASD).
-
-We are building a **hardened Android ROM** coupled with a **Private Cloud MDM**,<br>
-creating a safe, simplified, and remotely managed digital environment.
-
-> *"Technology should be an enabler, not a barrier."*
-
-</div>
-
-<br />
 
 ---
 
-### The Ecosystem
+### Mission
+Kanso is an Epitech Innovative Project (EIP) dedicated to bridging the digital divide for neuroatypical individuals. We build a hardened, simplified Android environment paired with a robust MDM (Mobile Device Management) cloud infrastructure, allowing guardians to provide a safe and autonomous digital experience.
 
-Our architecture is built on three pillars, ensuring robust security and seamless synchronization.
+### Architecture Overview
 
-| Component | Tech Stack | Role |
-| :--- | :--- | :--- |
-| **📱 KansoOS (Core)** | `AOSP` `Kotlin` `Room` | A custom Android ROM with a strict Kiosk Mode. Zero distractions, cognitive-friendly UI. |
-| **☁️ Kanso Cloud** | `Node.js` `NestJS` `PostgreSQL` `Docker` | The backend "Source of Truth". Handles fleet management and secure telemetry. |
-| **💻 Guardian Portal** | `React` `Next.js` `TypeScript` | A simplified web dashboard for caregivers to manage apps and contacts remotely. |
+The Kanso ecosystem is composed of three main pillars:
 
-<br />
+#### 1. Core OS & Embedded
+* **[Android Manifest](https://github.com/KansoOS/kanso-android-manifest)**: The central build manifest for the Kanso ROM (based on AOSP/LineageOS).
+* **[Launcher](https://github.com/KansoOS/kanso-launcher)**: A custom Android launcher designed to minimize cognitive load.
+* **[MDM Agent](https://github.com/KansoOS/kanso-mdm-agent)**: The privileged system service handling device policies and telemetry.
 
----
+#### 2. Cloud Infrastructure
+* **[MDM Back-end](https://github.com/KansoOS/kanso-mdm-backend)**: The core API managing device fleets, user profiles, and security rules.
+* **[MDM Dashboard](https://github.com/KansoOS/kanso-web-dashboard)**: The administrative interface for parents and tutors.
 
-### Technology Stack
-
-We leverage industry-standard technologies to ensure **reliability**, **security**, and **performance**.
-
-<div align="center">
-
-  <img src="https://img.shields.io/badge/Android-3DDC84?style=flat-square&logo=android&logoColor=white" />
-  <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white" />
-  <img src="https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" />
-  
-  <img src="https://img.shields.io/badge/Rust-000000?style=flat-square&logo=rust&logoColor=white" />
-  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" />
-
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black" />
-  <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" />
-
-</div>
-
-<br />
+#### 3. Tools & Documentation
+* **[Documentation](https://github.com/KansoOS/kanso-docs)**: Technical specifications, architecture diagrams, and user manuals.
+* **[UI/UX assets](https://github.com/KansoOS/kanso-design-system)**: Shared UI/UX assets and accessibility guidelines.
 
 ---
 
-### Core Repositories
+### Tech Stack
 
-Explore the components of the Kanso ecosystem:
+| Domain | Technologies |
+| :--- | :--- |
+| **Mobile** | Android Open Source Project (AOSP), Kotlin, Java, C++ |
+| **Backend** | Node.js, PostgreSQL, Docker, Kubernetes |
+| **Frontend** | React, TypeScript, TailwindCSS |
+| **DevOps** | GitHub Actions, Terraform |
 
-* **[`kanso-android-core`](https://github.com/KansoOS/kanso-android-core)** - The AOSP build system and device tree configurations.
-* **[`kanso-launcher`](https://github.com/KansoOS/kanso-launcher)** - The accessible home screen interface (Kotlin).
-* **[`kanso-mdm-backend`](https://github.com/KansoOS/kanso-mdm-backend)** - The NestJS based API server.
-* **[`kanso-web-dashboard`](https://github.com/KansoOS/kanso-web-dashboard)** - The frontend portal for caregivers.
+### Contact & Status
 
-<br />
+This project is currently under active development (2026-2028 cycle).
+For security inquiries or partnership requests, please [contact us](mailto:elias-josue.hajjar-llauquen@epitech.eu) directly.
 
----
-
-<div align="center">
-
-### Privacy by Design
-
-We treat user data with the highest level of care.
-<br>
-**No Ads • No Selling of Data • End-to-End Control**
-
-<br>
-
-<p align="center">
-  <sub>Maintained with ❤️ by the Kanso Systems Engineering Team.</sub>
-  <br>
-  <a href="#">Website</a> • <a href="#">Documentation</a> • <a href="mailto:contact@kanso-os.com">Contact Us</a>
-</p>
-
-</div>
+© 2026 Kanso Project. All rights reserved.
