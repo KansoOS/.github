@@ -13,47 +13,96 @@ export default {
     }
 
     const event = request.headers.get('X-GitHub-Event');
-    if (event !== 'push') {
-      return new Response('Ignored (not a push event)', { status: 200 });
-    }
-
     const payload = JSON.parse(rawBody);
 
-    const isBranch = payload.ref.startsWith('refs/heads/');
-    const branch = payload.ref.replace('refs/heads/', '');
-    const defaultBranch = payload.repository.default_branch;
-
-    if (!payload.created || payload.deleted || !isBranch || branch === defaultBranch) {
-      return new Response('Skipped', { status: 200 });
+    if (event === 'push') {
+      return handlePush(payload, env);
     }
 
-    const [owner, repo] = payload.repository.full_name.split('/');
+    if (event === 'pull_request') {
+      return handlePullRequest(payload, env);
+    }
 
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
-      method: 'POST',
+    return new Response('Ignored (not a push or pull_request event)', { status: 200 });
+  },
+};
+
+async function handlePush(payload, env) {
+  const isBranch = payload.ref.startsWith('refs/heads/');
+  const branch = payload.ref.replace('refs/heads/', '');
+  const defaultBranch = payload.repository.default_branch;
+  // Les branches sont souvent créées à l'avance (vides, calées sur la branche
+  // par défaut) par l'outil de ticketing, avant le premier vrai push de code.
+  // Dans ce cas `payload.created` n'est vrai qu'au moment de cette création
+  // vide, pas quand du code arrive vraiment. On déclenche donc sur le premier
+  // push qui apporte des commits, que la branche soit neuve ou non : si une PR
+  // existe déjà pour cette branche, l'API GitHub répond 422 et c'est ignoré
+  // plus bas, donc pas de doublon.
+  const hasCommits = Array.isArray(payload.commits) && payload.commits.length > 0;
+
+  if (payload.deleted || !isBranch || branch === defaultBranch || !hasCommits) {
+    return new Response('Skipped', { status: 200 });
+  }
+
+  const [owner, repo] = payload.repository.full_name.split('/');
+
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.GH_TOKEN}`,
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'auto-draft-pr-worker',
+    },
+    body: JSON.stringify({
+      title: branch,
+      head: branch,
+      base: defaultBranch,
+      draft: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.log(`PR creation skipped for ${owner}/${repo}#${branch}: ${res.status} ${err}`);
+    return new Response('PR not created (see logs)', { status: 200 });
+  }
+
+  const pr = await res.json();
+  return new Response(`Draft PR created: ${pr.html_url}`, { status: 200 });
+}
+
+async function handlePullRequest(payload, env) {
+  const pr = payload.pull_request;
+
+  const isSameRepo = pr.head.repo && pr.head.repo.full_name === pr.base.repo.full_name;
+
+  if (payload.action !== 'closed' || !pr.merged || !isSameRepo) {
+    return new Response('Skipped', { status: 200 });
+  }
+
+  const branch = pr.head.ref;
+  const [owner, repo] = payload.repository.full_name.split('/');
+
+  const res = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(branch)}`,
+    {
+      method: 'DELETE',
       headers: {
         Authorization: `Bearer ${env.GH_TOKEN}`,
         Accept: 'application/vnd.github+json',
         'User-Agent': 'auto-draft-pr-worker',
       },
-      body: JSON.stringify({
-        title: branch,
-        head: branch,
-        base: defaultBranch,
-        draft: true,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      console.log(`PR creation skipped for ${owner}/${repo}#${branch}: ${res.status} ${err}`);
-      return new Response('PR not created (see logs)', { status: 200 });
     }
+  );
 
-    const pr = await res.json();
-    return new Response(`Draft PR created: ${pr.html_url}`, { status: 200 });
-  },
-};
+  if (!res.ok) {
+    const err = await res.text();
+    console.log(`Branch deletion skipped for ${owner}/${repo}#${branch}: ${res.status} ${err}`);
+    return new Response('Branch not deleted (see logs)', { status: 200 });
+  }
+
+  return new Response(`Branch deleted: ${owner}/${repo}#${branch}`, { status: 200 });
+}
 
 async function verifySignature(secret, body, signatureHeader) {
   if (!signatureHeader.startsWith('sha256=')) return false;

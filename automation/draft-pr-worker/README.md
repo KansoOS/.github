@@ -1,8 +1,10 @@
 # auto-draft-pr
 
-Cloudflare Worker qui écoute le webhook `push` au niveau de l'organisation GitHub
-et crée automatiquement une pull request en draft dès qu'une nouvelle branche
-est poussée pour la première fois (tous repos de l'org, présents et futurs).
+Cloudflare Worker qui écoute les webhooks `push` et `pull_request` au niveau de
+l'organisation GitHub. Il crée automatiquement une pull request en draft dès
+qu'un push apporte des commits sur une branche (qu'elle soit neuve ou déjà
+créée à l'avance, vide), et supprime la branche automatiquement quand sa PR
+est mergée (tous repos de l'org, présents et futurs).
 
 ## Déploiement (ce que tu dois faire)
 
@@ -22,7 +24,7 @@ wrangler deploy
 Settings → Developer settings → Fine-grained tokens :
 - Resource owner : ton organisation
 - Repository access : All repositories
-- Permissions : Contents = Read-only, Pull requests = Read and write
+- Permissions : Contents = Read and write (nécessaire pour supprimer une branche), Pull requests = Read and write
 
 ## Webhook organisation
 
@@ -30,7 +32,7 @@ Org Settings → Webhooks → Add webhook :
 - Payload URL : l'URL du Worker (ci-dessus)
 - Content type : `application/json`
 - Secret : la même valeur que `WEBHOOK_SECRET`
-- Events : "Let me select individual events" → coche uniquement **Pushes**
+- Events : "Let me select individual events" → coche **Pushes** et **Pull requests**
 
 Une fois branché, aucun fichier à ajouter dans les autres repos : ça marche
 aussi sur les repos créés après coup, tant que le token a accès à "All
