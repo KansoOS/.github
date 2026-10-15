@@ -3,8 +3,11 @@
 Cloudflare Worker qui écoute les webhooks `push` et `pull_request` au niveau de
 l'organisation GitHub. Il crée automatiquement une pull request en draft dès
 qu'un push apporte des commits sur une branche (qu'elle soit neuve ou déjà
-créée à l'avance, vide), et supprime la branche automatiquement quand sa PR
-est mergée (tous repos de l'org, présents et futurs).
+créée à l'avance, vide), supprime la branche automatiquement quand sa PR est
+mergée (tous repos de l'org, présents et futurs), et déclenche la synchro du
+monorepo vitrine [KansoOS/KansoOS](https://github.com/KansoOS/KansoOS) quand
+c'est un push sur la branche par défaut d'un repo mirroré (`backend-mdm`,
+`dashboard-web`, `infra` — liste `SYNCED_REPOS` dans `worker.js`).
 
 ## Déploiement (ce que tu dois faire)
 
@@ -24,7 +27,9 @@ wrangler deploy
 Settings → Developer settings → Fine-grained tokens :
 - Resource owner : ton organisation
 - Repository access : All repositories
-- Permissions : Contents = Read and write (nécessaire pour supprimer une branche), Pull requests = Read and write
+- Permissions : Contents = Read and write (nécessaire pour supprimer une branche), Pull requests = Read and write, **Actions = Read and write** (nécessaire pour déclencher le workflow de synchro du monorepo)
+
+⚠️ Ce même token (valeur identique à `GH_TOKEN`) doit aussi être posé comme secret **`SYNC_TOKEN`** sur le repo `KansoOS/KansoOS` (Settings → Secrets and variables → Actions) : c'est lui qui sert à `sync.yml` pour cloner les repos sources.
 
 ## Webhook organisation
 
