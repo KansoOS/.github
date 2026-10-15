@@ -6,8 +6,8 @@ qu'un push apporte des commits sur une branche (qu'elle soit neuve ou déjà
 créée à l'avance, vide), supprime la branche automatiquement quand sa PR est
 mergée (tous repos de l'org, présents et futurs), et déclenche la synchro du
 monorepo vitrine [KansoOS/KansoOS](https://github.com/KansoOS/KansoOS) quand
-c'est un push sur la branche par défaut d'un repo mirroré (`backend-mdm`,
-`dashboard-web`, `infra` — liste `SYNCED_REPOS` dans `worker.js`).
+c'est un push sur la branche par défaut d'un repo mirroré (`kanso-mdm-backend`,
+`kanso-web-dashboard`, `kanso-infra` — liste `SYNCED_REPOS` dans `worker.js`).
 
 ## Déploiement (ce que tu dois faire)
 

@@ -28,10 +28,12 @@ export default {
 };
 
 // Repos (dans l'org KansoOS) mirorés dans le monorepo vitrine KansoOS/KansoOS.
+// Noms réels des repos GitHub (≠ noms des dossiers locaux de dev) :
+// kanso-mdm-backend, kanso-web-dashboard, kanso-infra.
 const MONOREPO_OWNER = 'KansoOS';
 const MONOREPO_REPO = 'KansoOS';
 const MONOREPO_SYNC_WORKFLOW = 'sync.yml';
-const SYNCED_REPOS = new Set(['backend-mdm', 'dashboard-web', 'infra']);
+const SYNCED_REPOS = new Set(['kanso-mdm-backend', 'kanso-web-dashboard', 'kanso-infra']);
 
 async function handlePush(payload, env) {
   const isBranch = payload.ref.startsWith('refs/heads/');
