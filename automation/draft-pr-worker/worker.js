@@ -15,12 +15,25 @@ export default {
     const event = request.headers.get('X-GitHub-Event');
     const payload = JSON.parse(rawBody);
 
+    // Toutes les actions côté API GitHub (créer une PR, supprimer une
+    // branche, déclencher un workflow) passent par un token d'installation
+    // de GitHub App, pas par un PAT personnel : sinon GitHub attribue la PR
+    // (et, en cas de squash, le commit final sur main) au propriétaire du
+    // token plutôt qu'à l'auteur réel du push.
+    let token;
+    try {
+      token = await getInstallationToken(env);
+    } catch (err) {
+      console.log(`Installation token error: ${err.message}`);
+      return new Response('Failed to authenticate as GitHub App (see logs)', { status: 200 });
+    }
+
     if (event === 'push') {
-      return handlePush(payload, env);
+      return handlePush(payload, token, env);
     }
 
     if (event === 'pull_request') {
-      return handlePullRequest(payload, env);
+      return handlePullRequest(payload, token);
     }
 
     return new Response('Ignored (not a push or pull_request event)', { status: 200 });
@@ -35,7 +48,7 @@ const MONOREPO_REPO = 'KansoOS';
 const MONOREPO_SYNC_WORKFLOW = 'sync.yml';
 const SYNCED_REPOS = new Set(['kanso-mdm-backend', 'kanso-web-dashboard', 'kanso-infra']);
 
-async function handlePush(payload, env) {
+async function handlePush(payload, token, env) {
   const isBranch = payload.ref.startsWith('refs/heads/');
   const branch = payload.ref.replace('refs/heads/', '');
   const defaultBranch = payload.repository.default_branch;
@@ -51,7 +64,7 @@ async function handlePush(payload, env) {
   // merger ici).
   if (branch === defaultBranch) {
     if (owner === MONOREPO_OWNER && SYNCED_REPOS.has(repo)) {
-      await triggerMonorepoSync(repo, env);
+      await triggerMonorepoSync(repo, token, env);
     }
     return new Response('Default branch push handled', { status: 200 });
   }
@@ -66,7 +79,7 @@ async function handlePush(payload, env) {
   const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.GH_TOKEN}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
       'User-Agent': 'auto-draft-pr-worker',
     },
@@ -90,13 +103,13 @@ async function handlePush(payload, env) {
 
 // Déclenche le workflow de synchro dans KansoOS/KansoOS (via workflow_dispatch) :
 // c'est lui qui clone `repo`@defaultBranch et met à jour sa copie dans le monorepo.
-async function triggerMonorepoSync(repo, env) {
+async function triggerMonorepoSync(repo, token, env) {
   const res = await fetch(
     `https://api.github.com/repos/${MONOREPO_OWNER}/${MONOREPO_REPO}/actions/workflows/${MONOREPO_SYNC_WORKFLOW}/dispatches`,
     {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${env.GH_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github+json',
         'User-Agent': 'auto-draft-pr-worker',
       },
@@ -110,7 +123,7 @@ async function triggerMonorepoSync(repo, env) {
   }
 }
 
-async function handlePullRequest(payload, env) {
+async function handlePullRequest(payload, token) {
   const pr = payload.pull_request;
 
   const isSameRepo = pr.head.repo && pr.head.repo.full_name === pr.base.repo.full_name;
@@ -127,7 +140,7 @@ async function handlePullRequest(payload, env) {
     {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${env.GH_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github+json',
         'User-Agent': 'auto-draft-pr-worker',
       },
@@ -141,6 +154,79 @@ async function handlePullRequest(payload, env) {
   }
 
   return new Response(`Branch deleted: ${owner}/${repo}#${branch}`, { status: 200 });
+}
+
+// --- Auth GitHub App : un token d'installation frais à chaque requête -----
+// (le volume est faible, pas besoin de le mettre en cache ; un Worker ne
+// garantit de toute façon pas la persistance d'un cache entre deux requêtes).
+
+async function getInstallationToken(env) {
+  const jwt = await buildAppJwt(env.GH_APP_ID, env.GH_APP_PRIVATE_KEY);
+
+  const res = await fetch(
+    `https://api.github.com/app/installations/${env.GH_APP_INSTALLATION_ID}/access_tokens`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'auto-draft-pr-worker',
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`${res.status} ${await res.text()}`);
+  }
+
+  const { token } = await res.json();
+  return token;
+}
+
+async function buildAppJwt(appId, privateKeyPem) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', typ: 'JWT' };
+  // iat décalé d'1 min en arrière pour tolérer le clock drift ; exp à 9 min
+  // (max autorisé par GitHub : 10 min).
+  const payload = { iat: now - 60, exp: now + 9 * 60, iss: appId };
+
+  const unsigned = `${base64url(json(header))}.${base64url(json(payload))}`;
+  const key = await importPrivateKey(privateKeyPem);
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    key,
+    new TextEncoder().encode(unsigned)
+  );
+  return `${unsigned}.${base64url(new Uint8Array(signature))}`;
+}
+
+// Nécessite une clé au format PKCS#8 (`-----BEGIN PRIVATE KEY-----`), pas le
+// PKCS#1 (`-----BEGIN RSA PRIVATE KEY-----`) téléchargé par défaut par
+// GitHub : la convertir une fois avec
+//   openssl pkcs8 -topk8 -nocrypt -in original.pem -out pkcs8.pem
+// (Web Crypto, utilisé ici, n'importe que du PKCS#8.)
+async function importPrivateKey(pem) {
+  const b64 = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\s+/g, '');
+  const binary = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    'pkcs8',
+    binary,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+}
+
+function json(obj) {
+  return new TextEncoder().encode(JSON.stringify(obj));
+}
+
+function base64url(bytes) {
+  const str = btoa(String.fromCharCode(...bytes));
+  return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 async function verifySignature(secret, body, signatureHeader) {
